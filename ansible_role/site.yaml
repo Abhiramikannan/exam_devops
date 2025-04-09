@@ -1,14 +1,7 @@
 ---
-- hosts: webservers
-  become: true
-  vars_files:
-    - group_vars/all/vault.yml
-  tasks:
-    - name: Ping webservers
-      ping:
-    - name: Install curl
-      apt:
-        name: curl
-        state: present
-  roles: 
+- name: Configure web server
+  hosts: webserver   # <- matches your hosts file
+  become: yes
+
+  roles:
     - webserver
