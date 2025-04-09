@@ -1,0 +1,183 @@
+ansible-webserver/
+├── ansible.cfg                          # ← Step 2
+├── inventory/
+│   └── hosts                            # ← Step 3
+├── group_vars/
+│   └── all/
+│       └── vault.yml                    # ← Step 10
+├── roles/
+│   └── webserver/                       # ← Step 4
+│       ├── tasks/
+│       │   └── main.yml                 # ← Step 5
+│       ├── handlers/
+│       │   └── main.yml                 # ← Step 5
+│       └── templates/
+│           └── index.html.j2           # ← Step 6
+└── site.yml                             # ← Step 7
+
+
+step1:  tree reponame
+
+**Step 2: `ansible.cfg`**
+
+📄 **Path:** `ansible-webserver/ansible.cfg`
+[defaults]
+inventory = inventory/hosts
+roles_path = roles
+
+
+### 📦 **Step 3: Inventory File**
+
+📄 **Path:** `ansible-webserver/inventory/hosts`
+[webservers]
+web1 ansible_host=192.168.1.10 ansible_user=ubuntu
+web2 ansible_host=192.168.1.11 ansible_user=ubuntu
+
+[webservers:vars]
+env=staging
+
+### ⚙️ **Step 4: Create Role**
+cd ansible-webserver
+ansible-galaxy init roles/webserver
+
+### 📜 **Step 5: Tasks and Handlers**
+
+📄 **Tasks File:** `ansible-webserver/roles/webserver/tasks/main.yml`
+
+- name: Install Apache
+  apt:
+    name: apache2
+    state: present
+    update_cache: yes
+  tags: apache
+
+- name: Copy dynamic homepage
+  template:
+    src: index.html.j2
+    dest: /var/www/html/index.html
+  notify: Restart Apache
+  when: env == "staging"
+
+- name: Start and enable Apache service
+  service:
+    name: apache2
+    state: started
+    enabled: yes
+
+
+
+📄 **Handlers File:** ansible-webserver/roles/webserver/handlers/main.yml
+- name: Restart Apache
+  service:
+    name: apache2
+    state: restarted
+
+
+
+
+### 🧩 **Step 6: Jinja2 Template**
+
+📄 **Path:** `ansible-webserver/roles/webserver/templates/index.html.j2`
+<html>
+  <body>
+    <h1>Welcome to {{ inventory_hostname }} in {{ env }} environment!</h1>
+  </body>
+</html>
+
+
+### 🗂️ **Step 7: Main Playbook**
+
+📄 **Path:** `ansible-webserver/site.yml`
+- name: Apply Webserver Role
+  hosts: webservers
+  become: yes
+
+  vars_files:
+    - group_vars/all/vault.yml
+
+  roles:
+    - webserver
+
+  tasks:
+    - name: Ping all webservers
+      ping:
+
+    - name: Install curl
+      apt:
+        name: curl
+        state: present
+
+
+
+---
+
+### 🛡️ **Step 10: Vault File**
+
+📄 **Path:** `ansible-webserver/group_vars/all/vault.yml`
+
+Create this file with encrypted variables using:
+      ansible-vault create group_vars/all/vault.yml
+
+      inside vault.yaml:
+          env: staging
+
+Then run the playbook with:
+ansible-playbook site.yml --ask-vault-pass
+
+Encrypt with:
+          ansible-vault encrypt group_vars/all/vault.yml
+Run with:
+    ansible-playbook site.yml --ask-vault-pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
