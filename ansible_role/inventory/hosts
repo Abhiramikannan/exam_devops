@@ -1,0 +1,6 @@
+[webservers]
+192.168.153.128
+192.168.153.133
+
+[webservers:vars]
+env=staging
